@@ -2,31 +2,14 @@ package rub.masterprojekt;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
+import java.util.concurrent.ExecutionException;
 
 import android.app.Activity;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -37,7 +20,6 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity
 {
-	private final String USER_AGENT = "Mozilla/5.0";
 	private StringBuilder m = new StringBuilder();
 
 	@Override
@@ -46,92 +28,50 @@ public class MainActivity extends Activity
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
+		final EditText user = (EditText) findViewById(R.id.editText1);
+		final EditText password = (EditText) findViewById(R.id.editText2);
 		final Button loginButton = (Button) findViewById(R.id.button1);
 		final TextView content = (TextView) findViewById(R.id.textView3);
 
 		loginButton.setOnClickListener(new OnClickListener()
-		{	
+		{
 			@Override
 			public void onClick(View v)
 			{
-				try
-				{
-				    content.setText(m.append(sendPost("http://masterproj.bplaced.net/cms_login.php", "nick=seb&password=abcde")));
-				}
-				catch (Exception e)
-				{
-					content.setText(m.append("Fehler"));
-				}
-				//
-				// BufferedReader reader = null;
-				// String text = "";
-				//
-				// try
-				// {
-				// String urlParameters = "nick=seb&password=abcde";
-				//
-				// // Defined URL where to send data
-				// URL url = new
-				// URL("http://masterproj.bplaced.net/cms_login.php");
-				// text += "URL erstellt";
-				//
-				// // Send POST data request
-				// URLConnection conn = url.openConnection();
-				// conn.setDoOutput(true);
-				// //conn.setDoInput(true);
-				// text += "Connection erstellt";
-				//
-				// text += "DAVOR\n";
-				// text += conn.toString();
-				// text += "\n";
-				// OutputStreamWriter wr = new
-				// OutputStreamWriter(conn.getOutputStream());
-				// text += "DANACH";
-				// wr.write(urlParameters);
-				// wr.flush();
-				// text += "Writer erstellt";
-				//
-				// // Get the server response
-				// reader = new BufferedReader(new
-				// InputStreamReader(conn.getInputStream()));
-				// StringBuilder sb = new StringBuilder();
-				// String line = null;
-				// text += "Reader erstellt";
-				//
-				// // Read Server Response
-				// while ((line = reader.readLine()) != null)
-				// {
-				// // Append server response in string
-				// sb.append(line + "\n");
-				// }
-				//
-				// text = sb.toString();
-				// }
-				// catch (IOException e)
-				// {
-				// text += "IO_";
-				// }
-				// catch (Exception ex)
-				// {
-				// text += "FEHLER1";
-				// }
-				// finally
-				// {
-				// try
-				// {
-				// reader.close();
-				// }
-				//
-				// catch (Exception ex)
-				// {
-				// text += "FEHLER2";
-				// }
-				// }
-				//
-				// // Show response on activity
-				// content.setText("Antwort:" + text);
+				String request = "nick=" + user.getText().toString() + "&password=" + password.getText().toString();
+				new RequestTask().execute("http://masterproj.bplaced.net/cms_login.php", request);
 			}
 		});
+	}
+	
+	private class RequestTask extends AsyncTask<String, Void, Void>
+	{
+		private String response = "FEHLER";
+		
+		protected void onPreExecute()
+		{
+            
+        }
+		
+		@Override
+		protected Void doInBackground(String... params)
+		{
+			try
+			{
+				response = sendPost(params[0], params[1]);
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+			}
+			return null;
+		}
+		
+		protected void onPostExecute(Void unused)
+		{
+			TextView c = (TextView) findViewById(R.id.textView3);
+			c.setText(response);
+		}
 	}
 
 	// HTTP POST request
@@ -140,17 +80,12 @@ public class MainActivity extends Activity
 		URL obj = new URL(url);
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 
-		// Add request header
+		// add request header
 		con.setRequestMethod("POST");
-		con.setRequestProperty("User-Agent", USER_AGENT);
-		con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
 
 		// Send post request
 		con.setDoOutput(true);
-//		m.append(con.toString());
-		m.append("Erstelle Stream: ");
 		DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-		m.append("DANACH");
 		wr.writeBytes(urlParameters);
 		wr.flush();
 		wr.close();
@@ -165,6 +100,7 @@ public class MainActivity extends Activity
 			response.append("\n");
 		}
 		in.close();
+		con.disconnect();
 
 		// Return result
 		return response.toString();
