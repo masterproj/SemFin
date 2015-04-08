@@ -17,6 +17,7 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity
 {
@@ -50,7 +51,7 @@ public class MainActivity extends Activity
 		
 		protected void onPreExecute()
 		{
-            
+            Toast.makeText(getBaseContext(), "Verbindung zum Server wird hergestellt!", Toast.LENGTH_SHORT).show();
         }
 		
 		@Override
@@ -70,6 +71,7 @@ public class MainActivity extends Activity
 		protected void onPostExecute(Void unused)
 		{
 			TextView c = (TextView) findViewById(R.id.textView3);
+			Toast.makeText(getBaseContext(), "Verbindung zum Server hergestellt!", Toast.LENGTH_SHORT).show();
 			c.setText(response);
 		}
 	}
