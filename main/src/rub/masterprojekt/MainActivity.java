@@ -1,14 +1,7 @@
 package rub.masterprojekt;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.concurrent.ExecutionException;
-
 import android.app.Activity;
-import android.os.AsyncTask;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -16,98 +9,73 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends Activity
+//
+public class MainActivity extends Activity implements TaskCompleted
 {
-	private StringBuilder m = new StringBuilder();
-
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-
-		final EditText user = (EditText) findViewById(R.id.editText1);
-		final EditText password = (EditText) findViewById(R.id.editText2);
-		final Button loginButton = (Button) findViewById(R.id.button1);
-		final TextView content = (TextView) findViewById(R.id.textView3);
-
-		loginButton.setOnClickListener(new OnClickListener()
+		
+		final EditText edtxtUser = (EditText) findViewById(R.id.edtxtUser);
+		final EditText edtxtPassword = (EditText) findViewById(R.id.edtxtPassword);
+		final Button btnLogin = (Button) findViewById(R.id.btnLogin);
+		final Button btnAccount = (Button) findViewById(R.id.btnAccount);
+		
+		btnLogin.setOnClickListener(new OnClickListener()
 		{
 			@Override
-			public void onClick(View v)
+			public void onClick(View view)
 			{
-				String request = "nick=" + user.getText().toString() + "&password=" + password.getText().toString();
-				new RequestTask().execute("http://masterproj.bplaced.net/cms_login.php", request);
+				String user = edtxtUser.getText().toString();
+				String password = edtxtPassword.getText().toString();
+				
+				if (checkInput(user, password))
+				{
+				    //Neues Fenster für das User-Login erzeugen und öffnen.
+					//Intent intent = new Intent(view.getContext(), LoginActivity.class);
+					//view.getContext().startActivity(intent);
+					String request = "nick=" + user + "&password=" + password;
+					new RequestTask(MainActivity.this).execute("http://masterproj.bplaced.net/cms_login.php", request);
+				}
+				else
+				{
+					Toast.makeText(view.getContext(), "Benutzername oder Passwort ungültig.", Toast.LENGTH_LONG).show();
+				}
+			}
+		});
+		
+		btnAccount.setOnClickListener(new OnClickListener()
+		{
+			@Override
+			public void onClick(View view)
+			{
+				// Neues Fenster für das User-Login erzeugen und öffnen.
+				Intent intent = new Intent(view.getContext(), AccountActivity.class);
+				view.getContext().startActivity(intent);
 			}
 		});
 	}
 	
-	private class RequestTask extends AsyncTask<String, Void, Void>
+	
+	//
+	private boolean checkInput(String user, String password)
 	{
-		private String response = "FEHLER";
-		
-		protected void onPreExecute()
+		if (user != null && user.length() > 0)
 		{
-            Toast.makeText(getBaseContext(), "Verbindung zum Server wird hergestellt!", Toast.LENGTH_SHORT).show();
-        }
-		
-		@Override
-		protected Void doInBackground(String... params)
-		{
-			try
+			if (password != null && password.length() > 0)
 			{
-				response = sendPost(params[0], params[1]);
+				return true;
 			}
-			catch (Exception e)
-			{
-				e.printStackTrace();
-			}
-			return null;
 		}
-		
-		protected void onPostExecute(Void unused)
-		{
-			TextView c = (TextView) findViewById(R.id.textView3);
-			Toast.makeText(getBaseContext(), "Verbindung zum Server hergestellt!", Toast.LENGTH_SHORT).show();
-			c.setText(response);
-		}
+		return false;
 	}
 
-	// HTTP POST request
-	private String sendPost(String url, String urlParameters) throws Exception
-	{
-		URL obj = new URL(url);
-		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-
-		// add request header
-		con.setRequestMethod("POST");
-
-		// Send post request
-		con.setDoOutput(true);
-		DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-		wr.writeBytes(urlParameters);
-		wr.flush();
-		wr.close();
-
-		BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-		String inputLine;
-		StringBuffer response = new StringBuffer();
-
-		while ((inputLine = in.readLine()) != null)
-		{
-			response.append(inputLine);
-			response.append("\n");
-		}
-		in.close();
-		con.disconnect();
-
-		// Return result
-		return response.toString();
-	}
-
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu)
 	{
@@ -116,6 +84,7 @@ public class MainActivity extends Activity
 		return true;
 	}
 
+	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item)
 	{
@@ -129,4 +98,17 @@ public class MainActivity extends Activity
 		}
 		return super.onOptionsItemSelected(item);
 	}
+
+
+	@Override
+	public void onTaskComplete(String result)
+	{
+		//Toast.makeText(this, result, Toast.LENGTH_LONG).show();
+		
+		// Neues Fenster für das User-Login erzeugen und öffnen.
+		Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+		intent.putExtra("RESULT", result + "\n" + Thread.currentThread().getName());
+		startActivity(intent);
+	}
+
 }

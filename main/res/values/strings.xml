@@ -4,5 +4,11 @@
     <string name="app_name">Seminar Finder</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="user">Benutzer</string>
+    <string name="password">Passwort</string>
+    <string name="btnLogin">Anmelden</string>
+    <string name="btnAccount">Konto erstellen</string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="title_activity_account">AccountActivity</string>
 
 </resources>
